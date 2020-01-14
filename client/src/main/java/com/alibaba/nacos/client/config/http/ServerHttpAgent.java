@@ -241,7 +241,9 @@ public class ServerHttpAgent implements HttpAgent {
     }
 
     public ServerHttpAgent(Properties properties) throws NacosException {
+        //初始化nacos服务端管理组件
         serverListMgr = new ServerListManager(properties);
+        //初始化一些参数
         init(properties);
     }
 

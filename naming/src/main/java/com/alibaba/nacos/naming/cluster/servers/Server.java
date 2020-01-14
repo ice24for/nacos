@@ -19,6 +19,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.naming.misc.UtilsAndCommons;
 
 /**
+ * 集群成员节点
  * Member node of Nacos cluster
  *
  * @author nkorange

@@ -50,6 +50,7 @@ import java.util.Map;
 
 /**
  * Methods for Raft consistency protocol. These methods should only be invoked by Nacos server itself.
+ * 保证一致性协议的一些方法，这些方法斗殴nacos服务端相互调用
  *
  * @author nkorange
  * @since 1.0.0
@@ -59,6 +60,7 @@ import java.util.Map;
     UtilsAndCommons.NACOS_SERVER_CONTEXT + UtilsAndCommons.NACOS_NAMING_CONTEXT + "/raft"})
 public class RaftController {
 
+    public static final String VOTE = "/vote";
     @Autowired
     private RaftConsistencyServiceImpl raftConsistencyService;
 

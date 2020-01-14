@@ -55,11 +55,18 @@ public class RaftStore {
 
     private String cacheDir = UtilsAndCommons.DATA_BASE_DIR + File.separator + "data";
 
+    /**
+     * 反序列数据，构建Datum，如果本地文件有，就序列化，如果没有
+     * @param notifier
+     * @param datums
+     * @throws Exception
+     */
     public synchronized void loadDatums(RaftCore.Notifier notifier, ConcurrentMap<String, Datum> datums) throws Exception {
 
         Datum datum;
         long start = System.currentTimeMillis();
         for (File cache : listCaches()) {
+            //初始化命名空间内的所有服务数据
             if (cache.isDirectory() && cache.listFiles() != null) {
                 for (File datumFile : cache.listFiles()) {
                     datum = readDatum(datumFile, cache.getName());
@@ -79,6 +86,12 @@ public class RaftStore {
         Loggers.RAFT.info("finish loading all datums, size: {} cost {} ms.", datums.size(), (System.currentTimeMillis() - start));
     }
 
+    /**
+     * #Fri Dec 27 14:53:07 CST 2019
+     * meta.properties 文件内容是term=1200
+     * @return
+     * @throws Exception
+     */
     public synchronized Properties loadMeta() throws Exception {
         File metaFile = new File(metaFileName);
         if (!metaFile.exists() && !metaFile.getParentFile().mkdirs() && !metaFile.createNewFile()) {
@@ -124,7 +137,18 @@ public class RaftStore {
             if (StringUtils.isBlank(json)) {
                 return null;
             }
-
+            //00-00---000-NACOS_SWITCH_DOMAIN-000---00-00  比如 com.alibaba.nacos.naming.domains.meta.00-00---000-NACOS_SWITCH_DOMAIN-000---00-00
+            /**
+             * {"key":"com.alibaba.nacos.naming.domains.meta.00-00---000-NACOS_SWITCH_DOMAIN-000---00-00",
+             * "timestamp":12,"value":{"adWeightMap":{},"checkTimes":3,"checksum":"","clientBeatInterval":5000,
+             * "defaultCacheMillis":3000,"defaultInstanceEphemeral":true,"defaultPushCacheMillis":10000,"disableAddIP":false,
+             * "distroEnabled":true,"distroServerExpiredMillis":10000,"distroThreshold":0.7,"enableAuthentication":false,"enableStandalone":true,
+             * "healthCheckEnabled":true,"healthCheckWhiteList":[],"httpHealthParams":{"factor":0.85,"max":5000,"min":500},"incrementalList":[],
+             * "limitedUrlMap":{},"masters":[],"mysqlHealthParams":{"factor":0.65,"max":3000,"min":2000},"name":"00-00---000-NACOS_SWITCH_DOMAIN-000---00-00",
+             * "overriddenServerStatus":"UP","pushCVersion":"1.0.12","pushEnabled":true,"pushGoVersion":"0.1.0","pushJavaVersion":"0.1.0","pushPythonVersion":"0.4.3",
+             * "sendBeatOnly":false,"serverStatusSynchronizationPeriodMillis":2000,"serviceStatusSynchronizationPeriodMillis":5000,
+             * "tcpHealthParams":{"factor":0.75,"max":5000,"min":1000}}}
+             */
             if (KeyBuilder.matchSwitchKey(file.getName())) {
                 return JSON.parseObject(json, new TypeReference<Datum<SwitchDomain>>() {
                 });
@@ -254,6 +278,8 @@ public class RaftStore {
     }
 
     private File[] listCaches() throws Exception {
+        // 加载 nacos_home/nacos/data/naming/目录下，
+        // 如果该目录不存在就创建，如果创建失败就抛异常
         File cacheDir = new File(this.cacheDir);
         if (!cacheDir.exists() && !cacheDir.mkdirs()) {
             throw new IllegalStateException("cloud not make out directory: " + cacheDir.getName());

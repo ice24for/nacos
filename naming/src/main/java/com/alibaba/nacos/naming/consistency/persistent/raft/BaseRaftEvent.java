@@ -18,6 +18,7 @@ package com.alibaba.nacos.naming.consistency.persistent.raft;
 import org.springframework.context.ApplicationEvent;
 
 /**
+ * Raft协议基础事件
  * @author pbting
  * @date 2019-07-01 8:46 PM
  */

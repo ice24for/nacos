@@ -33,6 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.alibaba.nacos.core.utils.SystemUtils.*;
 
 /**
+ * 管理全局的服务列表刷新
  * The manager to globally refresh and operate server list.
  *
  * @author nkorange
@@ -76,10 +77,14 @@ public class ServerListManager {
         GlobalExecutor.registerServerStatusReporter(new ServerStatusReporter(), 2000);
     }
 
+    /**
+     * 刷新服务列表
+     * @return
+     */
     private List<Server> refreshServerList() {
 
         List<Server> result = new ArrayList<>();
-
+        //  单机启动，直接获取本地ip
         if (STANDALONE_MODE) {
             Server server = new Server();
             server.setIp(NetUtils.getLocalAddress());
@@ -90,6 +95,7 @@ public class ServerListManager {
 
         List<String> serverList = new ArrayList<>();
         try {
+            //读取集群配置文件
             serverList = readClusterConf();
         } catch (Exception e) {
             Loggers.SRV_LOG.warn("failed to get config: " + CLUSTER_CONF_FILE_PATH, e);
@@ -99,7 +105,7 @@ public class ServerListManager {
             Loggers.SRV_LOG.debug("SERVER-LIST from cluster.conf: {}", result);
         }
 
-        //use system env
+        //use system env 如果服务列表为空
         if (CollectionUtils.isEmpty(serverList)) {
             serverList = SystemUtils.getIPsBySystemEnv(UtilsAndCommons.SELF_SERVICE_CLUSTER_ENV);
             if (Loggers.SRV_LOG.isDebugEnabled()) {
@@ -118,17 +124,18 @@ public class ServerListManager {
                     ip = server.split(UtilsAndCommons.IP_PORT_SPLITER)[0];
                     port = Integer.parseInt(server.split(UtilsAndCommons.IP_PORT_SPLITER)[1]);
                 } else {
+                    //获取server 启动端口
                     ip = server;
                     port = RunningConfig.getServerPort();
                 }
-
+                //  封装成员节点
                 Server member = new Server();
                 member.setIp(ip);
                 member.setServePort(port);
                 result.add(member);
             }
         }
-
+//        最终返回用户配置的集群server节点
         return result;
     }
 
@@ -148,7 +155,7 @@ public class ServerListManager {
     public List<Server> getHealthyServers() {
         return healthyServers;
     }
-
+//  推送给所有监听者
     private void notifyListeners() {
 
         GlobalExecutor.notifyServerListChange(new Runnable() {
@@ -286,6 +293,7 @@ public class ServerListManager {
         @Override
         public void run() {
             try {
+//                首先获取用户配置文件中的集群server列表或者单机启动本地ip
                 List<Server> refreshedServers = refreshServerList();
                 List<Server> oldServers = servers;
 
@@ -295,7 +303,7 @@ public class ServerListManager {
                 }
 
                 boolean changed = false;
-
+//                对比老的服务列表去除老的server，获得新的serverlist
                 List<Server> newServers = (List<Server>) CollectionUtils.subtract(refreshedServers, oldServers);
                 if (CollectionUtils.isNotEmpty(newServers)) {
                     servers.addAll(newServers);
@@ -311,6 +319,7 @@ public class ServerListManager {
                 }
 
                 if (changed) {
+                    //一旦有变化就通知监听者
                     notifyListeners();
                 }
 

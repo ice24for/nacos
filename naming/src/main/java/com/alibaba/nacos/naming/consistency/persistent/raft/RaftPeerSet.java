@@ -122,7 +122,7 @@ public class RaftPeerSet implements ServerChangeListener, ApplicationContextAwar
     public Set<String> allServersIncludeMyself() {
         return peers.keySet();
     }
-
+    //	获得除去自己之外的所有服务的ip地址+端口号
     public Set<String> allServersWithoutMySelf() {
         Set<String> servers = new HashSet<String>(peers.keySet());
 
@@ -140,28 +140,38 @@ public class RaftPeerSet implements ServerChangeListener, ApplicationContextAwar
         return peers.size();
     }
 
+    /**
+     * 决定leader
+     * @param candidate 候选人
+     * @return
+     */
     public RaftPeer decideLeader(RaftPeer candidate) {
+        //放入请回会带来的RaftPeer对象，相当于更新
         peers.put(candidate.ip, candidate);
-
+        //TreeBag因为实现了SortedBag与Bag接口，所以它的特征是有序
         SortedBag ips = new TreeBag();
+        //最大投票次数
         int maxApproveCount = 0;
         String maxApprovePeer = null;
         for (RaftPeer peer : peers.values()) {
+            //如果peer的投票为空说明还没有接收到返回，直接跳过
             if (StringUtils.isEmpty(peer.voteFor)) {
                 continue;
             }
 
             ips.add(peer.voteFor);
+            //获取当前的peer的投票数量是否大于最大投票数
+            //如果大于，就赋值给最大投票数的变量，并且将该peer的标识符传给maxApproverPeer
             if (ips.getCount(peer.voteFor) > maxApproveCount) {
                 maxApproveCount = ips.getCount(peer.voteFor);
                 maxApprovePeer = peer.voteFor;
             }
-        }
-
+        }//全部循环结束就会产生当次的最大投票的节点和对应的投票次数
+        //如果当前最大数量超过了半数，就认为是leader
         if (maxApproveCount >= majorityCount()) {
             RaftPeer peer = peers.get(maxApprovePeer);
             peer.state = RaftPeer.State.LEADER;
-
+            //如果当前leader不是这个节点，就把这个节点赋值给leader变量
             if (!Objects.equals(leader, peer)) {
                 leader = peer;
                 applicationContext.publishEvent(new LeaderElectFinishedEvent(this, leader));
@@ -210,8 +220,10 @@ public class RaftPeerSet implements ServerChangeListener, ApplicationContextAwar
         return update(candidate);
     }
 
+    //获取本地server对应的RaftPeer，
     public RaftPeer local() {
         RaftPeer peer = peers.get(NetUtils.localServer());
+        // 如果没有找到并且是单机启动的话就创建一个
         if (peer == null && SystemUtils.STANDALONE_MODE) {
             RaftPeer localPeer = new RaftPeer();
             localPeer.ip = NetUtils.localServer();
@@ -219,6 +231,7 @@ public class RaftPeerSet implements ServerChangeListener, ApplicationContextAwar
             peers.put(localPeer.ip, localPeer);
             return localPeer;
         }
+        //如果没有找到，而且不是单机启动，就直接抛异常 没有找到本机器的对应的RaftPeer对象
         if (peer == null) {
             throw new IllegalStateException("unable to find local peer: " + NetUtils.localServer() + ", all peers: "
                 + Arrays.toString(peers.keySet().toArray()));
@@ -230,11 +243,11 @@ public class RaftPeerSet implements ServerChangeListener, ApplicationContextAwar
     public RaftPeer get(String server) {
         return peers.get(server);
     }
-
+    //当前节点的大多数 过半
     public int majorityCount() {
         return peers.size() / 2 + 1;
     }
-
+    //把选举相关的所有数据都重置
     public void reset() {
 
         leader = null;
@@ -258,20 +271,23 @@ public class RaftPeerSet implements ServerChangeListener, ApplicationContextAwar
 
     @Override
     public void onChangeServerList(List<Server> latestMembers) {
-
+        //  传入最新的集群server列表
         Map<String, RaftPeer> tmpPeers = new HashMap<>(8);
         for (Server member : latestMembers) {
 
-            if (peers.containsKey(member.getKey())) {
+            if (peers.containsKey(member.getKey())) {//存在
+//                key 192.168.158.50:8848 value=RaftPeer
                 tmpPeers.put(member.getKey(), peers.get(member.getKey()));
                 continue;
             }
-
+//          不存在，封装一个RaftPeer
             RaftPeer raftPeer = new RaftPeer();
+//            192.168.158.50:8848
             raftPeer.ip = member.getKey();
 
-            // first time meet the local server:
+            // first time meet the local server:  匹配到本机器，本地ip:port，赋值任期
             if (NetUtils.localServer().equals(member.getKey())) {
+//                localTerm在RaftCore初始化的时候已经从本地加载了任期
                 raftPeer.term.set(localTerm.get());
             }
 
@@ -282,6 +298,7 @@ public class RaftPeerSet implements ServerChangeListener, ApplicationContextAwar
         peers = tmpPeers;
 
         if (RunningConfig.getServerPort() > 0) {
+//            终于设置为true  封装了一堆list和对象
             ready = true;
         }
 

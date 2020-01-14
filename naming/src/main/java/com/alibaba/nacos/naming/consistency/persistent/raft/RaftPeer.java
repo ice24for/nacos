@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author nacos
+ * 集群中的所有节点对象
  */
 public class RaftPeer {
 
@@ -31,6 +32,7 @@ public class RaftPeer {
 
     public String voteFor;
 
+    //任期
     public AtomicLong term = new AtomicLong(0L);
 
     public volatile long leaderDueMs = RandomUtils.nextLong(0, GlobalExecutor.LEADER_TIMEOUT_MS);
@@ -57,7 +59,7 @@ public class RaftPeer {
          */
         FOLLOWER,
         /**
-         * Candidate leader to be elected
+         * Candidate leader to be elected 领导候选人
          */
         CANDIDATE
     }

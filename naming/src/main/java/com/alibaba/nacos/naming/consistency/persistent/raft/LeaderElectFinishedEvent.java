@@ -16,6 +16,7 @@
 package com.alibaba.nacos.naming.consistency.persistent.raft;
 
 /**
+ * leader选举完成的事件
  * @author pbting
  * @date 2019-07-01 8:25 PM
  */

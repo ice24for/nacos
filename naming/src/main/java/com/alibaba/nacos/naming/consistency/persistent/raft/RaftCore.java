@@ -76,6 +76,7 @@ public class RaftCore {
 
     public static final String API_GET_PEER = UtilsAndCommons.NACOS_NAMING_CONTEXT + "/raft/peer";
 
+    ////一个调度线程池，单个线程
     private ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(1, new ThreadFactory() {
         @Override
         public Thread newThread(Runnable r) {
@@ -120,16 +121,18 @@ public class RaftCore {
 
         Loggers.RAFT.info("initializing Raft sub-system");
 
+        //启动一个线程
         executor.submit(notifier);
 
         long start = System.currentTimeMillis();
-
+        //加载本地磁盘数据
         raftStore.loadDatums(notifier, datums);
 
         setTerm(NumberUtils.toLong(raftStore.loadMeta().getProperty("term"), 0L));
 
         Loggers.RAFT.info("cache loaded, datum count: {}, current term: {}", datums.size(), peers.getTerm());
 
+        //卡住 直到所有任务都完成
         while (true) {
             if (notifier.tasks.size() <= 0) {
                 break;
@@ -358,16 +361,20 @@ public class RaftCore {
 
     }
 
+    /**
+     * master选举
+     */
     public class MasterElection implements Runnable {
         @Override
         public void run() {
             try {
-
+                //一旦本地的集群server配置文件加载完毕，封装好RaftPeer之后,就会接着往下走
                 if (!peers.isReady()) {
                     return;
                 }
 
                 RaftPeer local = peers.local();
+                //leaderDueMs=leader到期时间-标记时间500毫秒
                 local.leaderDueMs -= GlobalExecutor.TICK_PERIOD_MS;
 
                 if (local.leaderDueMs > 0) {
@@ -375,7 +382,9 @@ public class RaftCore {
                 }
 
                 // reset timeout
+                //如果小于零，超时时间就重置 leaderDueMs = GlobalExecutor.LEADER_TIMEOUT_MS + RandomUtils.nextLong(0, GlobalExecutor.RANDOM_MS);
                 local.resetLeaderDue();
+                // heartbeatDueMs = GlobalExecutor.HEARTBEAT_INTERVAL_MS;默认5秒钟
                 local.resetHeartbeatDue();
 
                 sendVote();
@@ -385,6 +394,7 @@ public class RaftCore {
 
         }
 
+
         public void sendVote() {
 
             RaftPeer local = peers.get(NetUtils.localServer());
@@ -392,14 +402,18 @@ public class RaftCore {
                 JSON.toJSONString(getLeader()), local.term);
 
             peers.reset();
-
+            //本地任期自增1
             local.term.incrementAndGet();
+            //推选自己 192.168.158.50:8848
             local.voteFor = local.ip;
+            //状态为候选人
             local.state = RaftPeer.State.CANDIDATE;
-
+            //封装json
             Map<String, String> params = new HashMap<>(1);
             params.put("vote", JSON.toJSONString(local));
+            //	获得除去自己之外的所有服务的ip地址+端口号
             for (final String server : peers.allServersWithoutMySelf()) {
+                // http://192.168.158.50:8848/v1/ns/raft/vote
                 final String url = buildURL(server, API_VOTE);
                 try {
                     HttpClient.asyncHttpPost(url, null, params, new AsyncCompletionHandler<Integer>() {
@@ -906,6 +920,9 @@ public class RaftCore {
         return notifier.getTaskSize();
     }
 
+    /**
+     * 通知线程
+     */
     public class Notifier implements Runnable {
 
         private ConcurrentHashMap<String, String> services = new ConcurrentHashMap<>(10 * 1024);
@@ -936,7 +953,7 @@ public class RaftCore {
 
             while (true) {
                 try {
-
+                    //阻塞队列，没有数据阻塞住
                     Pair pair = tasks.take();
 
                     if (pair == null) {

@@ -119,6 +119,15 @@ public class SystemUtils {
         return NACOS_HOME + File.separator + "conf" + File.separator + "cluster.conf";
     }
 
+    /**
+     * #it is ip
+     * #example
+     * 47.96.42.212:18001
+     * 115.179.216.231:18001
+     * 139.27.122.102:18001
+     * @return
+     * @throws IOException
+     */
     public static List<String> readClusterConf() throws IOException {
         List<String> instanceList = new ArrayList<String>();
         try(Reader reader = new InputStreamReader(new FileInputStream(new File(CLUSTER_CONF_FILE_PATH)),

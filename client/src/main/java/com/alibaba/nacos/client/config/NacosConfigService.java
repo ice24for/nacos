@@ -73,13 +73,16 @@ public class NacosConfigService implements ConfigService {
     private ConfigFilterChainManager configFilterChainManager = new ConfigFilterChainManager();
 
     public NacosConfigService(Properties properties) throws NacosException {
+        //是否设置编码，未设置默认utf-8
         String encodeTmp = properties.getProperty(PropertyKeyConst.ENCODE);
         if (StringUtils.isBlank(encodeTmp)) {
             encode = Constants.ENCODE;
         } else {
             encode = encodeTmp.trim();
         }
+        //初始化命名空间
         initNamespace(properties);
+        //初始化一个具有统计功能的http请求组件 装饰者模式
         agent = new MetricsHttpAgent(new ServerHttpAgent(properties));
         agent.start();
         worker = new ClientWorker(agent, configFilterChainManager, properties);
@@ -87,7 +90,7 @@ public class NacosConfigService implements ConfigService {
 
     private void initNamespace(Properties properties) {
         String namespaceTmp = null;
-
+                //一堆操作判断云环境
         String isUseCloudNamespaceParsing =
             properties.getProperty(PropertyKeyConst.IS_USE_CLOUD_NAMESPACE_PARSING,
                 System.getProperty(SystemPropertyKeyConst.IS_USE_CLOUD_NAMESPACE_PARSING,
@@ -109,10 +112,11 @@ public class NacosConfigService implements ConfigService {
                 }
             });
         }
-
+        //从配置中获取命名空间
         if (StringUtils.isBlank(namespaceTmp)) {
             namespaceTmp = properties.getProperty(PropertyKeyConst.NAMESPACE);
         }
+        //判空之后，赋值over 默认不填写就是""
         namespace = StringUtils.isNotBlank(namespaceTmp) ? namespaceTmp.trim() : EMPTY;
         properties.put(PropertyKeyConst.NAMESPACE, namespace);
     }
