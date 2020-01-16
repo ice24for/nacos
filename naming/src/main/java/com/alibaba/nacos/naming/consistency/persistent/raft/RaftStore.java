@@ -139,15 +139,69 @@ public class RaftStore {
             }
             //00-00---000-NACOS_SWITCH_DOMAIN-000---00-00  比如 com.alibaba.nacos.naming.domains.meta.00-00---000-NACOS_SWITCH_DOMAIN-000---00-00
             /**
-             * {"key":"com.alibaba.nacos.naming.domains.meta.00-00---000-NACOS_SWITCH_DOMAIN-000---00-00",
-             * "timestamp":12,"value":{"adWeightMap":{},"checkTimes":3,"checksum":"","clientBeatInterval":5000,
-             * "defaultCacheMillis":3000,"defaultInstanceEphemeral":true,"defaultPushCacheMillis":10000,"disableAddIP":false,
-             * "distroEnabled":true,"distroServerExpiredMillis":10000,"distroThreshold":0.7,"enableAuthentication":false,"enableStandalone":true,
-             * "healthCheckEnabled":true,"healthCheckWhiteList":[],"httpHealthParams":{"factor":0.85,"max":5000,"min":500},"incrementalList":[],
-             * "limitedUrlMap":{},"masters":[],"mysqlHealthParams":{"factor":0.65,"max":3000,"min":2000},"name":"00-00---000-NACOS_SWITCH_DOMAIN-000---00-00",
-             * "overriddenServerStatus":"UP","pushCVersion":"1.0.12","pushEnabled":true,"pushGoVersion":"0.1.0","pushJavaVersion":"0.1.0","pushPythonVersion":"0.4.3",
-             * "sendBeatOnly":false,"serverStatusSynchronizationPeriodMillis":2000,"serviceStatusSynchronizationPeriodMillis":5000,
-             * "tcpHealthParams":{"factor":0.75,"max":5000,"min":1000}}}
+             * [root@web-server data]# cat t1/com.alibaba.nacos.naming.domains.meta.t1##DEFAULT_GROUP\@\@nacos.test.1
+             *                 {
+             *                   "key": "com.alibaba.nacos.naming.domains.meta.t1##DEFAULT_GROUP@@nacos.test.1",
+             *                   "timestamp": 1,
+             *                   "value": {
+             *                     "appName": "",
+             *                     "checksum": "d66b9a6c1f73a55d243043fde4abf0cb",
+             *                     "clusterMap": {
+             *
+             *                     },
+             *                     "enabled": true,
+             *                     "groupName": "DEFAULT_GROUP",
+             *                     "ipDeleteTimeout": 30000,
+             *                     "lastModifiedMillis": 1579154284707,
+             *                     "metadata": {
+             *
+             *                     },
+             *                     "name": "DEFAULT_GROUP@@nacos.test.1",
+             *                     "namespaceId": "t1",
+             *                     "owners": [
+             *
+             *                     ],
+             *                     "protectThreshold": 0,
+             *                     "resetWeight": false,
+             *                     "selector": {
+             *                       "type": "none"
+             *                     },
+             *                     "token": ""
+             *                   }
+             *                 }
+             *                 [root@web-server data]# cat t1/com.alibaba.nacos.naming.iplist.t1##DEFAULT_GROUP\@\@nacos.test.1
+             *
+             *                 {
+             *                   "key": "com.alibaba.nacos.naming.iplist.t1##DEFAULT_GROUP@@nacos.test.1",
+             *                   "timestamp": 1,
+             *                   "value": {
+             *                     "cachedChecksum": "",
+             *                     "instanceList": [
+             *                       {
+             *                         "app": "unknown",
+             *                         "clusterName": "DEFAULT",
+             *                         "enabled": true,
+             *                         "ephemeral": false,
+             *                         "healthy": true,
+             *                         "instanceHeartBeatInterval": 5000,
+             *                         "instanceHeartBeatTimeOut": 15000,
+             *                         "instanceId": "1.1.1.1#80#DEFAULT#DEFAULT_GROUP@@nacos.test.1",
+             *                         "ip": "1.1.1.1",
+             *                         "ipDeleteTimeout": 30000,
+             *                         "lastBeat": 1579154284707,
+             *                         "marked": false,
+             *                         "metadata": {
+             *                           "netType": "external",
+             *                           "version": "2.0"
+             *                         },
+             *                         "port": 80,
+             *                         "serviceName": "DEFAULT_GROUP@@nacos.test.1",
+             *                         "tenant": "",
+             *                         "weight": 2
+             *                       }
+             *                     ]
+             *                   }
+             *                 }
              */
             if (KeyBuilder.matchSwitchKey(file.getName())) {
                 return JSON.parseObject(json, new TypeReference<Datum<SwitchDomain>>() {

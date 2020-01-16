@@ -440,7 +440,13 @@ public class RaftCore {
         }
     }
 
+    /**
+     * 接受选举
+     * @param remote
+     * @return
+     */
     public RaftPeer receivedVote(RaftPeer remote) {
+        //本地如果不包含，就抛异常
         if (!peers.contains(remote)) {
             throw new IllegalStateException("can not find peer: " + remote.ip);
         }
@@ -459,7 +465,8 @@ public class RaftCore {
         }
 
         local.resetLeaderDue();
-
+        // 如果别人的任期大于自己把票给别人，并且自己的状态变成follower
+        // 将别人比自己大的任期设置给自己的任期。
         local.state = RaftPeer.State.FOLLOWER;
         local.voteFor = remote.ip;
         local.term.set(remote.term.get());
@@ -473,12 +480,13 @@ public class RaftCore {
         @Override
         public void run() {
             try {
-
+                //如果peers还没有启动好久直接返回，和选主流程一样
                 if (!peers.isReady()) {
                     return;
                 }
-
+                //获取本地节点对象
                 RaftPeer local = peers.local();
+                // 心跳到期时间  =到期时间-心跳间隔时间500毫秒
                 local.heartbeatDueMs -= GlobalExecutor.TICK_PERIOD_MS;
                 if (local.heartbeatDueMs > 0) {
                     return;
@@ -589,6 +597,12 @@ public class RaftCore {
         }
     }
 
+    /**
+     * 解析接受心跳数据
+     * @param beat
+     * @return
+     * @throws Exception
+     */
     public RaftPeer receivedBeat(JSONObject beat) throws Exception {
         final RaftPeer local = peers.local();
         final RaftPeer remote = new RaftPeer();

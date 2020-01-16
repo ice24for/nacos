@@ -41,10 +41,16 @@ public class RaftPeer {
 
     public State state = State.FOLLOWER;
 
+    /**
+     * 重置leader到期时间  默认超时加上随机时间  15秒 + 0-5秒之间随机
+     */
     public void resetLeaderDue() {
         leaderDueMs = GlobalExecutor.LEADER_TIMEOUT_MS + RandomUtils.nextLong(0, GlobalExecutor.RANDOM_MS);
     }
 
+    /**
+     * 重置心跳到期时间，默认5秒钟
+     */
     public void resetHeartbeatDue() {
         heartbeatDueMs = GlobalExecutor.HEARTBEAT_INTERVAL_MS;
     }

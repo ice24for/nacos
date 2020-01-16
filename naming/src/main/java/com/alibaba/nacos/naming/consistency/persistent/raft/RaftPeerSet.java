@@ -198,10 +198,10 @@ public class RaftPeerSet implements ServerChangeListener, ApplicationContextAwar
                     HttpClient.asyncHttpGet(url, null, params, new AsyncCompletionHandler<Integer>() {
                         @Override
                         public Integer onCompleted(Response response) throws Exception {
-                            if (response.getStatusCode() != HttpURLConnection.HTTP_OK) {
+                            if (response.getStatusCode() != HttpURLConnection.HTTP_OK) { //返回不成功
                                 Loggers.RAFT.error("[NACOS-RAFT] get peer failed: {}, peer: {}",
                                     response.getResponseBody(), peer.ip);
-                                peer.state = RaftPeer.State.FOLLOWER;
+                                peer.state = RaftPeer.State.FOLLOWER;//先更新状态为follower
                                 return 1;
                             }
 

@@ -90,6 +90,12 @@ public class InstanceController {
         }
     };
 
+    /**
+     * 服务注册
+     * @param request
+     * @return
+     * @throws Exception
+     */
     @CanDistro
     @PostMapping
     public String register(HttpServletRequest request) throws Exception {

@@ -50,7 +50,7 @@ import java.util.Map;
 
 /**
  * Methods for Raft consistency protocol. These methods should only be invoked by Nacos server itself.
- * 保证一致性协议的一些方法，这些方法斗殴nacos服务端相互调用
+ * 保证一致性协议的一些方法，这些方法都是nacos服务端相互调用
  *
  * @author nkorange
  * @since 1.0.0
@@ -70,16 +70,30 @@ public class RaftController {
     @Autowired
     private RaftCore raftCore;
 
+    /**
+     * 接受投票请求
+     * @param request
+     * @param response
+     * @return
+     * @throws Exception
+     */
     @NeedAuth
     @PostMapping("/vote")
     public JSONObject vote(HttpServletRequest request, HttpServletResponse response) throws Exception {
-
+        //首先解析成RaftPeer对象
         RaftPeer peer = raftCore.receivedVote(
             JSON.parseObject(WebUtils.required(request, "vote"), RaftPeer.class));
 
         return JSON.parseObject(JSON.toJSONString(peer));
     }
 
+    /**
+     * 心跳
+     * @param request
+     * @param response
+     * @return
+     * @throws Exception
+     */
     @NeedAuth
     @PostMapping("/beat")
     public JSONObject beat(HttpServletRequest request, HttpServletResponse response) throws Exception {

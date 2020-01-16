@@ -37,22 +37,23 @@ public class NamingTest {
     public void testServiceList() throws Exception {
 
         Properties properties = new Properties();
-        properties.put(PropertyKeyConst.SERVER_ADDR, "11.160.165.126:8848");
-        properties.put(PropertyKeyConst.NAMESPACE, "t1");
+        properties.put(PropertyKeyConst.SERVER_ADDR, "47.99.44.97:18081");
+//        properties.put(PropertyKeyConst.NAMESPACE, "t1");
 
         NamingService namingService = NacosFactory.createNamingService(properties);
 
         Instance instance = new Instance();
-        instance.setIp("1.1.1.1");
+        instance.setIp("1.1.1.2");
         instance.setPort(80);
         instance.setWeight(2);
         Map<String, String> map = new HashMap<String, String>();
         map.put("netType", "external");
         map.put("version", "2.0");
         instance.setMetadata(map);
+        instance.setEphemeral(false);
 
         namingService.registerInstance("nacos.test.1", instance);
-
+        System.out.println("over");
 //        ExpressionSelector expressionSelector = new ExpressionSelector();
 //        expressionSelector.setExpression("INSTANCE.metadata.registerSource = 'dubbo'");
 //        ListView<String> serviceList = namingService.getServicesOfServer(1, 10, expressionSelector);
