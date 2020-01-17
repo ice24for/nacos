@@ -967,6 +967,7 @@ public class RaftCore {
 
             while (true) {
                 try {
+
                     //阻塞队列，没有数据阻塞住
                     Pair pair = tasks.take();
 
